@@ -162,7 +162,23 @@ def _generate_advice_from_openai(major):
 
 @app.post('/students/<int:student_id>/advice')
 def generate_advice(student_id):
-    pass  # TODO: Replace with your implementation
+    student = students.get(student_id, {})
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+    if ("major" not in student.keys()) or (student["major"] == ""):
+        return jsonify({"error": "Student major is required to generate advice"}), 400
+    try:
+        advice = _generate_advice_from_openai(student["major"])
+        student["advice"] = advice
+
+    
+    except Exception as e:
+        app.logger.error(f"Error while generating advice: {e}")
+        return jsonify({"error": "Upstream AI service failed"}), 502
+    return jsonify(student), 200
+        
+
+    #pass  # TODO: Replace with your implementation
 
 
 # --- Endpoint B: GET /students/<id>/advice ---
@@ -177,7 +193,15 @@ def generate_advice(student_id):
 
 @app.get('/students/<int:student_id>/advice')
 def get_advice(student_id):
-    pass  # TODO: Replace with your implementation
+    student = students.get(student_id, {})
+    if not student:
+        return jsonify({"error": "Student not found"}), 404
+    
+    if "advice" in student.keys():
+        return jsonify(student), 200
+    else:
+        return jsonify({"error": "Advice not found for this student"}), 404
+    #pass  # TODO: Replace with your implementation
 
 
 # =============================================================================
